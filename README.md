@@ -1,5 +1,6 @@
 # Text-Analytics-and-Sentiment-Analysis
-This repository contains work from individual, self-motivated practice as well as in-class assignments/presentations.  
+ 
+This repository contains code and output for a capstone project I completed through the University of Iowa
 ---
 
 ### Project Overview
