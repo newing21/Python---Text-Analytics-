@@ -9,3 +9,4 @@ Analysis contains over 200,000 thousand web articles scraped from the Washington
 
 ### Results
 
+<br/><img src='/images/Total_Tweets_per_Day.jpg'>
