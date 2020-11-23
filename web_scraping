@@ -1,0 +1,159 @@
+
+
+1. Web Article Scraping
+
+
+Importing Modules
+
+# ! pip install --upgrade bs4 selenium
+from bs4 import BeautifulSoup
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
+
+Searching "Washington Post" Using Selenium
+
+    url = "https://www.washingtonpost.com/"
+
+Loading the driver for remote web scraping
+
+    driver = webdriver.Chrome("C:\\Users\\hongs\\Desktop\\TextAnalysis\\chromedriver.exe")   # need to modify the path
+    driver.get(url)
+
+Simulating Web Browsing Using Selenium
+
+    driver.find_element_by_id('search-btn').click()
+    sbox_kw = driver.find_element_by_name('query')
+
+Enter the keyword
+
+    sbox_kw.send_keys('Coronavirus')
+    sbox_kw.send_keys(Keys.ENTER)
+
+Advanced search
+
+    driver.find_element_by_id('filterByContent').click() # drop dowm advanced search
+    cbox = driver.find_element_by_id('Article') # check box selcelction for Article
+    cbox.click() 
+    driver.find_element_by_id('submit').click() # re-click search
+
+Extract HTML
+
+    # It will take some time.
+    element = driver.find_element_by_tag_name("html")
+    html = element.get_attribute("outerHTML")
+    soup = BeautifulSoup(html, "html.parser")
+
+# It will take some time.
+
+    import os
+    import requests
+    import time
+
+if not os.path.isdir("outcome/HTMLs"):
+    os.mkdir("outcome/HTMLs")
+
+for i in range(1, 301):
+    print([i])
+    
+    a_list = soup.find_all(name = "div", attrs = {"class": "pb-feed-headline ng-scope"})
+
+    for a in a_list:
+        article_url = a.find("a")["href"]
+        r = requests.get(article_url)
+        file_name = article_url[len("https://www.washingtonpost.com/"):]
+
+        try:
+            if file_name.endswith(".html"):
+                file_name = article_url[len("https://www.washingtonpost.com/"):]
+                file_name = file_name.replace("/", "-")
+                if file_name.endswith("video.html"):
+                    continue
+                if file_name.endswith("live.html"):
+                    continue
+                
+            else:
+                file_name = article_url[len("https://www.washingtonpost.com/"):-1] + ".html"
+                file_name = file_name.replace("/", "-")
+                if file_name.endswith("video.html"):
+                    continue
+                if file_name.endswith("live.html"):
+                    continue
+                    
+            if (os.path.isfile("outcome/HTMLs/" + file_name)):
+                continue
+            else:
+                with open("outcome/HTMLs/" + file_name, "w+b") as fw:
+                    fw.write(r.content)
+                    
+                print(file_name)
+
+        except FileNotFoundError:
+            continue
+    
+    driver.find_element_by_link_text("Next").click()
+    
+    element = driver.find_element_by_tag_name("html")
+    html = element.get_attribute("outerHTML")
+    soup = BeautifulSoup(html, "html.parser")
+    
+    continue
+    
+    time.sleep(1)
+    
+    
+    
+Save the results
+
+# I will take some time.
+import os
+import requests
+from bs4 import BeautifulSoup
+
+os.listdir("outcome/HTMLs")
+with open("outcome/html_metadata.csv", "w", encoding="utf8") as fw:
+    fw.write("file_name\tarticle_title\tarticle_author\tposting_dateandtime\tarticle_text\n")
+    
+    for file_name in os.listdir("outcome/HTMLs"):
+        if not file_name.endswith(".html"):
+            continue
+        try:    
+            with open("outcome/HTMLs/" + file_name, "r+b") as fr:
+                print(file_name)
+                soup = BeautifulSoup(fr.read(), "html.parser")
+                article_title = soup.find("h1", {"data-qa": "headline"}).text.strip()
+
+                if soup.find("span", {"class": "author-name font-bold link blue hover-blue-hover"}) is None:
+                    article_author = ""
+                else:
+                    article_author = soup.find("span", {"class": "author-name font-bold link blue hover-blue-hover"}).text
+
+                if soup.find("div", {"class": "display-date"}) is None:
+                    posting_dateandtime = ""
+                else:
+                    posting_dateandtime = soup.find("div", {"class": "display-date"}).text
+
+                if soup.find("div", {"class": "article-body"}).text.replace("\n", " ") is None:
+                    article_text = "There are only images, graphs, and annotations in the article"
+                else:
+                    article_text = soup.find("div", {"class": "article-body"}).text.replace("\n", " ")
+
+                article_title = article_title.replace("\t", "")
+                article_aurthor = article_author.replace("\t", "")
+                posting_dateandtime = posting_dateandtime.replace("\t", "")
+                article_text = article_text.replace("\t", "")
+
+                fw.write("{}\t{}\t{}\t{}\t{}\n".format(file_name, article_title, article_author, posting_dateandtime, article_text))
+
+        except AttributeError:
+            continue
+            
+            
+            
+Load the dataframe
+
+
+import pandas as pd
+pd.set_option('display.max_colwidth', 150)
+
+df = pd.read_csv("outcome/html_metadata.csv", sep = "\t")
+df
