@@ -9,5 +9,7 @@ Analysis contains over 200,000 thousand web articles scraped from the Washington
 
 ### Results
 
-<img src='newing21/Python---Text-Analytics-/blob/master/Total_Tweets_per_Day.jpg'>
+![Screenshot (322)](https://user-images.githubusercontent.com/54378394/99929407-5ee63480-2d0a-11eb-93ee-e731b95217ac.png)
+
+![Screenshot (325)](https://user-images.githubusercontent.com/54378394/99929446-81784d80-2d0a-11eb-9b21-f21fab32c317.png)
 
