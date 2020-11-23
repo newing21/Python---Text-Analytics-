@@ -1,4 +1,4 @@
-# Text-Analytics-and-Sentiment-Analysis
+# Sentiment Analysis of Washington Post News Articles
  
 This repository contains code and output for a capstone project I completed through the University of Iowa
 ---
