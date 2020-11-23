@@ -1,0 +1,288 @@
+Text Analytics | MSCI:6100
+Anti-Virus Group Project
+3. Cluster and Topic Analysis
+Instructor: Kang-Pyo Lee
+
+Nathan Ewing, Sung Chul Hong, Dong Yun Kim
+Importing Modules
+# ! pip install --user --upgrade scikit-learn pyldavis
+# ! pip install --user wordcloud
+import pandas as pd
+import nltk
+df2 = pd.read_csv("html_metadata.csv", sep = "\t")
+df2 = df2.drop_duplicates(keep="first")
+df2.article_title = df2.article_title.astype(str)
+df2
+file_name	article_title	article_author	posting_dateandtime	article_text
+0	arts-entertainment-2020-02-27-spread-coronavir...	The spread of coronavirus is shuttering film s...	Travis M. Andrews	February 27, 2020 at 7:00 AM EST	Along with other entertainment sectors such as...
+1	arts-entertainment-2020-02-28-new-yorker-cover...	New Yorker coronavirus cover shows Trump with ...	Michael Cavna	February 28, 2020 at 11:30 AM EST	When conveying a crisis, sometimes the simples...
+2	arts-entertainment-2020-03-03-coronavirus-film...	‘Fast and Furious 9’ postponed a year, no live...	Sonia Rao	March 12, 2020 at 1:35 PM EDT	The city of Austin canceled South by Southwest...
+3	arts-entertainment-2020-03-10-cartoons-coronav...	How cartoonists are carefully satirizing the c...	Michael Cavna	March 10, 2020 at 10:54 AM EDT	Political cartoonists are facing a range of ch...
+4	arts-entertainment-2020-03-10-coachella-sxsw-c...	Coachella’s delay and SXSW’s cancellation show...	Sonia Rao	March 10, 2020 at 7:33 PM EDT	Austin’s local economy has come to expect an i...
+...	...	...	...	...	...
+3265	world-the_americas-virus-drives-perus-zoos-to-...	Virus drives Peru’s zoos to breaking point as ...	NaN	April 23, 2020 at 12:44 PM EDT	LIMA, Peru — The dozens of howler monkeys, mac...
+3266	world-the_americas-virus-spreads-fear-through-...	Virus spreads fear through Latin America’s unr...	NaN	April 27, 2020 at 9:43 PM EDT	SANTIAGO, Chile — The spreading specter of the...
+3267	world-the_americas-virus-spreads-fear-through-...	Virus spreads fear through Latin America’s unr...	NaN	April 27, 2020 at 11:49 AM EDT	SANTIAGO, Chile — The spreading specter of the...
+3268	world-un-chief-extremists-using-covid-19-to-re...	UN chief: Extremists using COVID-19 to recruit...	NaN	April 27, 2020 at 10:19 PM EDT	UNITED NATIONS — U.N. Secretary-General Antoni...
+3269	world-van-gogh-painting-stolen-from-dutch-muse...	Van Gogh painting stolen from Dutch museum clo...	James McAuley	March 30, 2020 at 2:36 PM EDT	PARIS — A Van Gogh painting on loan to a small...
+3270 rows × 5 columns
+
+import nltk
+import string 
+from nltk.corpus import stopwords
+
+nltk.download('stopwords')
+
+global_stopwords = stopwords.words("english")
+local_stopwords = [c for c in string.punctuation] +\
+                  ['’', '``', '…', '...', "''", '‘', '“', '”', "'m", "'re", "'s", "'ve", 'amp', 'https', "n't", 'rt', 
+                   'a…', 'co', 'i…','itâ€™s', 'â€\x9d', 'one', 'could','would', 'also', 'â€', 'said', '—', 'itâ']
+[nltk_data] Downloading package stopwords to
+[nltk_data]     /home/sungchong/nltk_data...
+[nltk_data]   Package stopwords is already up-to-date!
+from sklearn.feature_extraction.text import TfidfVectorizer
+
+vectorizer = TfidfVectorizer(use_idf=True, norm="l2", stop_words=global_stopwords+local_stopwords, max_df=0.7)
+X = vectorizer.fit_transform(df2.article_title)
+X.shape
+(3270, 6154)
+k = 5
+from sklearn.cluster import KMeans
+kmeans = KMeans(n_clusters=k, random_state=0)
+kmeans
+KMeans(algorithm='auto', copy_x=True, init='k-means++', max_iter=300,
+       n_clusters=5, n_init=10, n_jobs=None, precompute_distances='auto',
+       random_state=0, tol=0.0001, verbose=0)
+%time kmeans.fit(X)
+CPU times: user 19.4 s, sys: 1min 49s, total: 2min 8s
+Wall time: 21.8 s
+KMeans(algorithm='auto', copy_x=True, init='k-means++', max_iter=300,
+       n_clusters=5, n_init=10, n_jobs=None, precompute_distances='auto',
+       random_state=0, tol=0.0001, verbose=0)
+kmeans.cluster_centers_
+array([[0.0017761 , 0.        , 0.00074108, ..., 0.00044507, 0.00057788,
+        0.0004905 ],
+       [0.00598677, 0.        , 0.00174091, ..., 0.        , 0.        ,
+        0.        ],
+       [0.00209008, 0.01216685, 0.        , ..., 0.        , 0.        ,
+        0.        ],
+       [0.        , 0.        , 0.00875502, ..., 0.        , 0.        ,
+        0.        ],
+       [0.        , 0.        , 0.        , ..., 0.        , 0.        ,
+        0.        ]])
+kmeans.cluster_centers_.shape
+(5, 6154)
+kmeans.labels_
+array([1, 2, 1, ..., 0, 0, 1], dtype=int32)
+df2["cluster"] = kmeans.labels_
+df2[["article_title", "cluster"]]
+article_title	cluster
+0	The spread of coronavirus is shuttering film s...	1
+1	New Yorker coronavirus cover shows Trump with ...	2
+2	‘Fast and Furious 9’ postponed a year, no live...	1
+3	How cartoonists are carefully satirizing the c...	2
+4	Coachella’s delay and SXSW’s cancellation show...	1
+...	...	...
+3265	Virus drives Peru’s zoos to breaking point as ...	0
+3266	Virus spreads fear through Latin America’s unr...	0
+3267	Virus spreads fear through Latin America’s unr...	0
+3268	UN chief: Extremists using COVID-19 to recruit...	0
+3269	Van Gogh painting stolen from Dutch museum clo...	1
+3270 rows × 2 columns
+
+df2.cluster.value_counts()
+1    1814
+0     896
+2     472
+4      52
+3      36
+Name: cluster, dtype: int64
+counts = df2.cluster.value_counts()
+df2[df2.cluster == counts.idxmax()].sample(10, replace=False, random_state=0)[["article_title", "cluster"]]
+article_title	cluster
+1620	The coronavirus is amplifying the bias already...	1
+1992	Infect us with the coronavirus. It could speed...	1
+3126	Paris without cafes: In the midst of the coron...	1
+952	Religious freedom attorneys pick their battles...	1
+2367	Highlights of the nearly $500B coronavirus rel...	1
+2885	PlayStation no longer attending PAX East due t...	1
+2913	How coronavirus is worsening U.S.-China tensions	1
+1567	Kenya’s coronavirus strategy is straight out o...	1
+935	NYC nixes June events, including 3 major parades	1
+1252	Are gun stores and golf courses ‘essential bus...	1
+df2[df2.cluster == counts.idxmin()].sample(10, replace=False, random_state=0)[["article_title", "cluster"]]
+article_title	cluster
+2871	Showdown heats up between Trump, Democrats ove...	3
+472	Talks drag on $450B virus aid for small busine...	3
+285	Business Highlights	3
+2870	Treasury’s Mnuchin seeks additional $250 billi...	3
+1171	Northam open to idea of reopening business on ...	3
+284	Business Highlights	3
+279	Business Highlights	3
+152	Banks brace for millions of small-business loa...	3
+280	Business Highlights	3
+2295	3 takeaways from AP review of small-business l...	3
+import nltk
+df2["words"] = df2.article_title.apply(lambda x: nltk.word_tokenize(x))
+df2["tagged_words"] = df2.words.apply(lambda x: nltk.pos_tag(x))
+
+from collections import Counter
+
+def get_counter(dataframe, stopwords=[]):
+    counter = Counter()
+    
+    for l in dataframe.tagged_words:
+        word_set = set()
+
+        for t in l:
+            word = t[0].lower()
+            tag = t[1]
+
+            if word not in stopwords:
+                word_set.add(word)
+            
+        counter.update(word_set)
+        
+    return counter
+counter_max = get_counter(df2[df2.cluster == counts.idxmax()], global_stopwords+local_stopwords)
+counter_max.most_common(30)
+[('coronavirus', 1679),
+ ('pandemic', 179),
+ ('u.s.', 128),
+ ('amid', 87),
+ ('new', 81),
+ ('cases', 72),
+ ('outbreak', 65),
+ ('crisis', 65),
+ ('china', 55),
+ ('fight', 53),
+ ('response', 51),
+ ('house', 50),
+ ('first', 47),
+ ('testing', 47),
+ ('sports', 47),
+ ('says', 46),
+ ('test', 44),
+ ('spread', 42),
+ ('people', 42),
+ ('help', 42),
+ ('death', 41),
+ ('americans', 40),
+ ('white', 39),
+ ('positive', 38),
+ ('us', 35),
+ ('deaths', 35),
+ ('may', 33),
+ ('fears', 32),
+ ('d.c.', 32),
+ ('tests', 31)]
+counter_min = get_counter(df2[df2.cluster == counts.idxmin()], global_stopwords+local_stopwords)
+counter_min.most_common(30)
+[('business', 23),
+ ('small-business', 13),
+ ('highlights', 10),
+ ('coronavirus', 8),
+ ('loan', 6),
+ ('program', 6),
+ ('trump', 5),
+ ('ap', 4),
+ ('small', 3),
+ ('billion', 3),
+ ('aid', 3),
+ ('get', 3),
+ ('virus', 3),
+ ('firms', 3),
+ ('loans', 3),
+ ('plan', 2),
+ ('intended', 2),
+ ('gop', 2),
+ ('484', 2),
+ ('new', 2),
+ ('managed', 2),
+ ('365m', 2),
+ ('publicly', 2),
+ ('traded', 2),
+ ('open', 2),
+ ('review', 2),
+ ('3', 2),
+ ('takeaways', 2),
+ ('democrats', 2),
+ ('money', 2)]
+# ! pip install --user wordcloud
+Requirement already satisfied: wordcloud in /home/sungchong/.local/lib/python3.7/site-packages (1.6.0)
+Requirement already satisfied: matplotlib in /opt/conda/lib/python3.7/site-packages (from wordcloud) (3.1.2)
+Requirement already satisfied: numpy>=1.6.1 in /opt/conda/lib/python3.7/site-packages (from wordcloud) (1.17.3)
+Requirement already satisfied: pillow in /opt/conda/lib/python3.7/site-packages (from wordcloud) (7.0.0)
+Requirement already satisfied: pyparsing!=2.0.4,!=2.1.2,!=2.1.6,>=2.0.1 in /opt/conda/lib/python3.7/site-packages (from matplotlib->wordcloud) (2.4.6)
+Requirement already satisfied: kiwisolver>=1.0.1 in /opt/conda/lib/python3.7/site-packages (from matplotlib->wordcloud) (1.1.0)
+Requirement already satisfied: python-dateutil>=2.1 in /opt/conda/lib/python3.7/site-packages (from matplotlib->wordcloud) (2.8.1)
+Requirement already satisfied: cycler>=0.10 in /opt/conda/lib/python3.7/site-packages (from matplotlib->wordcloud) (0.10.0)
+Requirement already satisfied: setuptools in /opt/conda/lib/python3.7/site-packages (from kiwisolver>=1.0.1->matplotlib->wordcloud) (45.0.0.post20200113)
+Requirement already satisfied: six>=1.5 in /opt/conda/lib/python3.7/site-packages (from python-dateutil>=2.1->matplotlib->wordcloud) (1.13.0)
+from wordcloud import WordCloud
+from IPython.display import Image
+wc = WordCloud(background_color="white", max_words=100, width=800, height=500)
+wc.generate_from_frequencies(counter_max)
+wc.to_file("wordcloud.png")
+Image(filename="wordcloud.png")
+
+### LDA Topic Modeling
+num_topics = 5
+from sklearn.decomposition import LatentDirichletAllocation as LDA
+lda = LDA(n_components=num_topics, random_state=0)   # LDA uses randomness to get a probability distribution
+lda
+LatentDirichletAllocation(batch_size=128, doc_topic_prior=None,
+                          evaluate_every=-1, learning_decay=0.7,
+                          learning_method='batch', learning_offset=10.0,
+                          max_doc_update_iter=100, max_iter=10,
+                          mean_change_tol=0.001, n_components=5, n_jobs=None,
+                          perp_tol=0.1, random_state=0, topic_word_prior=None,
+                          total_samples=1000000.0, verbose=0)
+%time lda.fit(X)
+CPU times: user 3.67 s, sys: 435 µs, total: 3.67 s
+Wall time: 3.67 s
+LatentDirichletAllocation(batch_size=128, doc_topic_prior=None,
+                          evaluate_every=-1, learning_decay=0.7,
+                          learning_method='batch', learning_offset=10.0,
+                          max_doc_update_iter=100, max_iter=10,
+                          mean_change_tol=0.001, n_components=5, n_jobs=None,
+                          perp_tol=0.1, random_state=0, topic_word_prior=None,
+                          total_samples=1000000.0, verbose=0)
+lda.components_
+array([[ 1.51447794,  0.20001171,  0.92132353, ...,  0.20001876,
+         0.71768533,  0.20001774],
+       [ 1.28400221,  5.94270432,  0.96266981, ...,  0.20002333,
+         0.20002312,  0.63940476],
+       [10.37780872,  0.20001222,  1.84406905, ...,  0.59870023,
+         0.20002061,  0.20001998],
+       [ 0.21822072,  0.200014  ,  0.20006227, ...,  0.20002313,
+         0.20002425,  0.20002494],
+       [ 1.04338767,  0.20001258,  1.2090736 , ...,  0.20002066,
+         0.20002603,  0.20001921]])
+lda.components_.shape
+(5, 6154)
+def show_topics(model, feature_names, num_top_words):
+    for topic_idx, topic_scores in enumerate(model.components_):
+        print("***Topic {}:".format(topic_idx))
+        print(" + ".join(["{:.2f} * {}".format(topic_scores[i], feature_names[i]) for i in topic_scores.argsort()[::-1][:num_top_words]]))
+        print()
+show_topics(lda, vectorizer.get_feature_names(), 10)
+***Topic 0:
+43.68 * coronavirus + 19.03 * pandemic + 17.48 * sports + 15.26 * trump + 12.51 * affected + 11.50 * events + 11.14 * list + 8.80 * virus + 8.76 * home + 8.67 * new
+
+***Topic 1:
+35.04 * coronavirus + 20.34 * trump + 13.27 * virus + 12.98 * news + 8.27 * pandemic + 8.08 * workers + 8.00 * new + 7.76 * amid + 7.62 * brief + 7.52 * vaccine
+
+***Topic 2:
+39.03 * coronavirus + 11.91 * trump + 11.89 * death + 10.44 * new + 10.38 * 000 + 9.84 * pandemic + 9.76 * virus + 9.63 * cases + 8.77 * toll + 8.32 * outbreak
+
+***Topic 3:
+31.90 * coronavirus + 30.81 * need + 30.68 * know + 16.97 * trump + 12.76 * pandemic + 10.29 * today + 9.98 * spreading + 9.23 * highlights + 9.13 * virus + 8.89 * outbreak
+
+***Topic 4:
+33.00 * coronavirus + 20.10 * trump + 10.03 * covid + 9.70 * us + 9.69 * 19 + 9.06 * virus + 8.90 * crisis + 8.41 * china + 6.55 * pandemic + 6.47 * bad
+
+import pyLDAvis
+import pyLDAvis.sklearn
+pyLDAvis.enable_notebook()
+pyLDAvis.sklearn.prepare(lda, X, vectorizer)
